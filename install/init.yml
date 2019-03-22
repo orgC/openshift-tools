@@ -1,0 +1,64 @@
+---
+- hosts: nodes
+  sudo: yes
+
+  tasks: 
+    - name: copy hosts to dest node 
+      copy: src=/etc/hosts  dest=/etc/hosts
+
+    - name: copy yum repos file to dest node
+      copy: src=/etc/yum.repos.d/ocp.repo  dest=/etc/yum.repos.d/ocp.repo
+
+# scp registry.ocp.com:/etc/crts/ocp.com.crt /etc/pki/ca-trust/source/anchors/
+    - name: copy trust certificate file to dest node 
+      copy: src=/etc/pki/ca-trust/source/anchors/ocp.com.crt  dest=/etc/pki/ca-trust/source/anchors/ocp.com.crt
+
+    - name: command update ca trust 
+      command: update-ca-trust extract
+
+    - name: yum install packages about openshift install
+      yum: name={{ item }} state=latest
+      with_items:
+        - ntpdate 
+        - wget 
+        - git  
+        - net-tools 
+        - bind-utils 
+        - iptables-services 
+        - bridge-utils 
+        - bash-completion 
+        - vim 
+        - atomic-openshift-excluder 
+        - atomic-openshift-docker-excluder
+        - atomic-openshift-node
+        - lrzsz 
+        - unzip
+
+    - name: openshift excluder 
+      command: atomic-openshift-excluder unexclude
+
+#cat <<EOF > /root/install_ocp/docker-storage-setup
+#VG=docker-vg
+#EOF
+
+    - name: write docker storage config file 
+      shell: echo 'VG=docker-vg' > /tmp/docker-storage-setup
+
+    - name: yum install docker 
+      yum: name=docker state=latest
+
+    - name: part /dev/sdb 
+      parted: device=/dev/sdb number=1 state=present
+
+    - name: create pvs and vgs
+      lvg: vg=docker-vg pvs=/dev/sdb1
+
+    - name: create lvs by docker-storage-setup
+      command: docker-storage-setup
+
+    - name: extend lvs to 100%
+      lvol: vg=docker-vg lv=docker-pool size=100%VG
+
+
+    - name: restart docker 
+      systemd: name=docker state=restarted enabled=yes
