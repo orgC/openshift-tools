@@ -42,7 +42,7 @@
 #EOF
 
     - name: write docker storage config file 
-      shell: echo 'VG=docker-vg' > /tmp/docker-storage-setup
+      shell: echo 'VG=docker-vg' > /etc/sysconfig/docker-storage-setup
 
     - name: yum install docker 
       yum: name=docker state=latest
