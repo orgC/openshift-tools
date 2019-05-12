@@ -1,0 +1,60 @@
+---
+- hosts: nodes
+  sudo: yes
+
+  tasks: 
+    - name: copy hosts to dest node 
+      copy: src=/etc/hosts  dest=/etc/hosts
+
+    - name: copy yum repos file to dest node
+      copy: src=/etc/yum.repos.d/ocp.repo  dest=/etc/yum.repos.d/ocp.repo
+
+      #- name: remove rhel-7-server-rpms.repo 
+      #file: path=/etc/yum.repos.d/rhel-7-server-rpms.repo state=absent
+
+    - name: yum install packages about openshift install
+      yum: name={{ item }} state=latest
+      with_items:
+        - ntpdate 
+        - wget 
+        - git  
+        - net-tools 
+        - bind-utils 
+        - iptables-services 
+        - bridge-utils 
+        - bash-completion 
+        - vim 
+        - atomic-openshift-excluder 
+        - atomic-openshift-docker-excluder
+        - atomic-openshift-node
+        - lrzsz 
+        - unzip
+        - NetworkManager 
+
+    - name: openshift excluder 
+      command: atomic-openshift-excluder unexclude
+
+    - name: write docker storage config file 
+      shell: echo 'VG=docker-vg' > /etc/sysconfig/docker-storage-setup
+
+    - name: yum install docker 
+      yum: name=docker state=latest
+
+    - name: part /dev/sdb 
+      parted: device=/dev/sdb number=1 state=present
+
+    - name: create pvs and vgs
+      lvg: vg=docker-vg pvs=/dev/sdb1
+
+    - name: create lvs by docker-storage-setup
+      command: docker-storage-setup
+
+    - name: extend lvs to 100%
+      lvol: vg=docker-vg lv=docker-pool size=100%VG
+
+    - name: add insecure-registry into docker config file
+      replace: backup=true dest=/etc/sysconfig/docker regexp='.*OPTIONS=.*' replace="OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0\/16 --insecure-registry registry.ocp.com:5000'"
+
+    - name: restart docker 
+      systemd: name=docker state=restarted enabled=yes
+
