@@ -59,6 +59,10 @@
     - name: extend lvs to 100%
       lvol: vg=docker-vg lv=docker-pool size=100%VG
 
+# add live-restore config in docker config file 
+# echo '{  "live-restore": true }' > /etc/docker/daemon.json
+    - name: enable docker live-restore
+      copy: src=/etc/docker/daemon.json dest=/etc/docker/daemon.json
 
     - name: restart docker 
       systemd: name=docker state=restarted enabled=yes

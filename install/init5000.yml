@@ -55,6 +55,12 @@
     - name: add insecure-registry into docker config file
       replace: backup=true dest=/etc/sysconfig/docker regexp='.*OPTIONS=.*' replace="OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0\/16 --insecure-registry registry.ocp.com:5000'"
 
+# add live-restore config in docker config file
+# run below command to modify reference config file first. 
+# echo '{  "live-restore": true }' > /etc/docker/daemon.json
+    - name: enable docker live-restore
+      copy: src=/etc/docker/daemon.json dest=/etc/docker/daemon.json
+
     - name: restart docker 
       systemd: name=docker state=restarted enabled=yes
 
