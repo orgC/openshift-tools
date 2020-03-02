@@ -3,6 +3,7 @@
   sudo: yes
 
   tasks: 
+
     - name: copy hosts to dest node 
       copy: src=/etc/hosts  dest=/etc/hosts
 
@@ -34,8 +35,8 @@
     - name: openshift excluder 
       command: atomic-openshift-excluder unexclude
 
-    - name: write docker storage config file 
-      shell: echo 'VG=docker-vg' > /etc/sysconfig/docker-storage-setup
+    - name: copy docker storage config file each nodes 
+      copy: src=/etc/sysconfig/docker-storage-setup dest=/etc/sysconfig/docker-storage-setup
 
     - name: yum install docker 
       yum: name=docker state=latest
@@ -53,7 +54,7 @@
       lvol: vg=docker-vg lv=docker-pool size=100%VG
 
     - name: add insecure-registry into docker config file
-      replace: backup=true dest=/etc/sysconfig/docker regexp='.*OPTIONS=.*' replace="OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0\/16 --insecure-registry registry.ocp.com:5000'"
+      replace: backup=true dest=/etc/sysconfig/docker regexp='.*OPTIONS=.*' replace="OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0\/16 --insecure-registry registry.ocp3.com:5000'"
 
 # add live-restore config in docker config file
 # run below command to modify reference config file first. 
