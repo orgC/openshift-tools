@@ -1,11 +1,6 @@
 ---
-- hosts: nodes
-  sudo: yes
-
+- hosts: master1.ocp3.ocp.com 
   tasks: 
-    - name: copy hosts to dest node 
-      copy: src=/etc/hosts  dest=/etc/hosts
-
     - name: copy yum repos file to dest node
       copy: src=/etc/yum.repos.d/ocp.repo  dest=/etc/yum.repos.d/ocp.repo
 
@@ -62,7 +57,7 @@
 # add live-restore config in docker config file 
 # echo '{  "live-restore": true }' > /etc/docker/daemon.json
     - name: enable docker live-restore
-      copy: src=/etc/docker/daemon.json dest=/etc/docker/daemon.json
+      copy: src=daemon.json dest=/etc/docker/daemon.json
 
     - name: restart docker 
       systemd: name=docker state=restarted enabled=yes

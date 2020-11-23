@@ -1,0 +1,8 @@
+---
+- hosts: nodes
+  tasks: 
+    - name: enable docker live-restore
+      copy: src=daemon.json dest=/etc/docker/daemon.json
+
+    - name: restart docker 
+      systemd: name=docker state=restarted enabled=yes
